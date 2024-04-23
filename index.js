@@ -45,6 +45,13 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result)
   })
+  // update
+  app.get('/milk/:id', async(req, res)=>{
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)}
+    const result = await milkCollection.findOne(query);
+    res.send(result)
+})
   // delete
   app.delete('/milk/:id', async(req,res)=>{
 
@@ -52,6 +59,26 @@ async function run() {
     const query = {_id: new ObjectId(id)}
     const result = await milkCollection.deleteOne(query);
     res.send(result)
+})
+// update
+app.put('/milk/:id', async(req,res)=>{
+  const id = req.params.id;
+  const filter = {_id: new ObjectId(id)}
+  const options = {upsert: true};
+  const updatedMilk= req.body;
+  const milk ={
+      $set:{
+          name:updatedMilk.name,
+          description: updatedMilk.description,
+          taste: updatedMilk.taste,
+          photo: updatedMilk.photo
+      }
+      
+  }
+  const result = await milkCollection.updateOne(filter, milk, options);
+  
+  res.send(result)
+  
 })
 
     // Send a ping to confirm a successful connection
