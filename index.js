@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -39,6 +39,21 @@ async function run() {
         const result = await milkCollection.insertOne(newMilk);
         res.send(result)
     })
+    // read
+    app.get('/milk', async(req,res)=>{
+      const cursor = milkCollection.find();
+      const result = await cursor.toArray();
+      res.send(result)
+  })
+  // delete
+  app.delete('/milk/:id', async(req,res)=>{
+
+    const id =req.params.id;
+    const query = {_id: new ObjectId(id)}
+    const result = await milkCollection.deleteOne(query);
+    res.send(result)
+})
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
