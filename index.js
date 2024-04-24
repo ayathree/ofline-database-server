@@ -28,9 +28,11 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const milkCollection = client.db('milkDB').collection('milk');
+    // for user
+    const milkUserCollection = client.db('milkDB').collection('user')
 
     // create
     app.post('/milk',async(req,res)=>{
@@ -79,6 +81,56 @@ app.put('/milk/:id', async(req,res)=>{
   
   res.send(result)
   
+})
+// create for user
+app.post('/newUser',async(req,res)=>{
+  const newUser = req.body;
+  console.log(newUser)
+  const result = await milkUserCollection.insertOne(newUser);
+  res.send(result)
+})
+// read for user
+app.get('/newUser', async(req,res)=>{
+  const cursor = milkUserCollection.find();
+  const result = await cursor.toArray();
+  res.send(result)
+})
+// // update user
+// app.get('/newUser/:id', async(req, res)=>{
+//   const id = req.params.id;
+//   const query = {_id: new ObjectId(id)}
+//   const result = await milkUserCollection.findOne(query);
+//   res.send(result)
+// })
+// // update
+// app.put('/newUser/:id', async(req,res)=>{
+//   const id = req.params.id;
+//   const filter = {_id: new ObjectId(id)}
+//   const options = {upsert: true};
+//   const updatedUser= req.body;
+//   const user ={
+//       $set:{
+          
+//           email: updatedUser.email,
+          
+//       }
+      
+//   }
+//   const result = await milkUserCollection.updateOne(filter, user, options);
+  
+//   res.send(result)
+  
+// })
+
+
+
+// delete for user
+app.delete('/newUser/:id', async(req,res)=>{
+
+  const id =req.params.id;
+  const query = {_id: new ObjectId(id)}
+  const result = await milkUserCollection.deleteOne(query);
+  res.send(result)
 })
 
     // Send a ping to confirm a successful connection
