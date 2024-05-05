@@ -1,13 +1,29 @@
 const express = require('express');
 const cors = require('cors');
+// task 1
+const jwt = require('jsonwebtoken');
+// task 7
+const cookieParser = require('cookie-parser')
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+
+// task 4
+app.use(cors({
+  origin:[
+    // 'http://localhost:5173'
+    // for jwt deploy
+    'https://milkshake-store.web.app',
+    'https://milkshake-store.firebaseapp.com'
+  ],
+  credentials: true
+}));
 app.use(express.json());
+// task 8
+app.use(cookieParser());
 
 
 
@@ -24,6 +40,33 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+// task 11
+const logger = (req,res,next)=>{
+  console.log('log: info',req.method, req.url);
+  next()
+}
+
+// task 12
+const verifyToken = (req,res,next)=>{
+  const token= req?.cookies?.token;
+  // console.log('token in the middleware', token)
+  // task 13
+  if (!token) {
+    return res.status(401).send({message:'unauthorized access'})
+    
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET,(err, decoded)=>{
+    if (err) {
+      return res.status(401).send({message:'unauthorized access'})
+      
+    }
+    req.user = decoded;
+    next()
+  })
+  // next()
+
+}
 
 async function run() {
   try {
@@ -90,8 +133,18 @@ app.post('/newUser',async(req,res)=>{
   res.send(result)
 })
 // read for user
-app.get('/newUser', async(req,res)=>{
+app.get('/newUser', logger, verifyToken, async(req,res)=>{
+  // console.log('cookies', req.cookies)
+  // task 14
+  console.log('token owner info', req.user)
+  // you have to focus on car-doctor for this part
+  if (!req.user.email) {
+    return res.status(403).send({message: 'forbidden access'})
+    
+  }
   const cursor = milkUserCollection.find();
+  // task 9
+  
   const result = await cursor.toArray();
   res.send(result)
 })
@@ -132,9 +185,31 @@ app.delete('/newUser/:id', async(req,res)=>{
   const result = await milkUserCollection.deleteOne(query);
   res.send(result)
 })
+// task 2
+// auth related api
+app.post('/jwt',logger, async(req,res)=>{
+  const user = req.body;
+  console.log('user for token',user)
+  const token= jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn:'1h'})
+  // task 5
+
+  res.cookie('token', token,{
+    httpOnly:true,
+    secure: true,
+    sameSite:'none'
+  })
+  .send({success: true})
+
+})
+// task 6
+app.post('/logout', async(req,res)=>{
+  const user =req.body;
+  console.log('logging out', user)
+  res.clearCookie('token', {maxAge:0}).send({success: true})
+})
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
